@@ -1,6 +1,8 @@
-# SNuDD
+# SNuDDD
 
 [![arXiv](http://img.shields.io/badge/arXiv-2302.12846-B31B1B.svg)](https://arxiv.org/abs/2302.12846)
+
+**SNuDDD** (**S**olar **N**e**u**trinos for **D**irect **D**etection **D**iffrentiable) is a JAX implementation of **SNuDD**.
 
 **SNuDD** (**S**olar **N**e**u**trinos for **D**irect **D**etection) is a python package for accurate computations of solar neutrino scattering rates at direct detection (DD) experiments in the presence of non-standard neutrino interactions (NSI). 
 **SNuDD**  was developed and utilised for the NSI sensitivity estimates of the xenon-based DD experiments XENON, LUX-ZEPLIN and DARWIN in [*A direct detection view of the neutrino NSI landscape*](https://arxiv.org/abs/2302.12846).
