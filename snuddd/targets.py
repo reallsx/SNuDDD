@@ -2,6 +2,7 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
+import jax.numpy as jnp
 
 from snuddd import config
 from snuddd.binding import ElectronBinder, binding_xe
@@ -28,7 +29,7 @@ class Target(ABC):
 
     def momentum_transfer(self, E_R):
         """Return momentum transfer q in GeV,"""
-        return np.sqrt(2 * self.mass * E_R)
+        return jnp.sqrt(2 * self.mass * E_R)
 
     def update_model(self, model):
         self.model = model
@@ -143,18 +144,18 @@ def helm_form_factor(q, A):
     c = 1.23 * A ** (1 / 3) - 0.6  # fm
     s = 0.9  # fm
     a = 0.52  # fm
-    R = np.sqrt(c ** 2 + 7 / 3 * np.pi ** 2 * a ** 2 - 5 * s ** 2)
+    R = jnp.sqrt(c ** 2 + 7 / 3 * np.pi ** 2 * a ** 2 - 5 * s ** 2)
 
     condlist = [q == 0., ]
-    funclist = [1., lambda Q: 3 * j1(Q * R) / (Q * R) * np.exp(-Q ** 2 * s ** 2 / 2)]
+    funclist = [1., lambda Q: 3 * j1(Q * R) / (Q * R) * jnp.exp(-Q ** 2 * s ** 2 / 2)]
 
-    return np.piecewise(q, condlist, funclist)
+    return jnp.piecewise(q, condlist, funclist)
 
 
 def j1(x):
     """Return spherical Bessel function of the first kind."""
     try:
-        bessel = (np.sin(x) - x * np.cos(x)) / x ** 2
+        bessel = (jnp.sin(x) - x * jnp.cos(x)) / x ** 2
     except FloatingPointError:
         bessel = 0.
 

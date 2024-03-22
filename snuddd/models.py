@@ -5,6 +5,7 @@ import typing
 from abc import ABC, abstractmethod
 
 import numpy as np
+import jax.numpy as jnp
 
 import snuddd.config as config
 
@@ -39,7 +40,7 @@ class SM(Model):
         cs_mu = cs_e
         cs_tau = cs_e
 
-        return np.array([cs_e, cs_mu, cs_tau])  # np array in order to work with vectorized function
+        return jnp.array([cs_e, cs_mu, cs_tau])  # np array in order to work with vectorized function
 
     def electron_cross_section_flavour(self, electron, E_R, E_nu):
         """Return cross section for target by flavour. Energies in GeV."""
@@ -52,10 +53,7 @@ class SM(Model):
                 config.g_L ** 2 + config.g_R ** 2 * (1 - y) ** 2 - config.g_L * config.g_R * config.m_e * y / E_nu))
         cs_tau = cs_mu
 
-        return np.array([cs_e, cs_mu, cs_tau])  # np array in order to work with vectorized function
-
-
-        return np.array([c_sm, c_int, c_bsm])  # np array in order to work with vectorized function
+        return jnp.array([cs_e, cs_mu, cs_tau])  # np array in order to work with vectorized function
 
 
 class GeneralNSI(Model):
@@ -69,27 +67,27 @@ class GeneralNSI(Model):
     @property
     def xi_p(self):
         """Return proton-rotated charged part of the NSI factorisation."""
-        return np.sqrt(5) * np.cos(self.eta) * np.cos(self.phi)
+        return jnp.sqrt(5) * jnp.cos(self.eta) * jnp.cos(self.phi)
 
     @property
     def xi_n(self):
         """Return the neutron-rotated charged part of the NSI factorisation."""
-        return np.sqrt(5) * np.sin(self.eta)
+        return jnp.sqrt(5) * jnp.sin(self.eta)
 
     @property
     def xi_u(self):
         """Return the up-quark-rotated charged part of the NSI factorisation."""
-        return np.sqrt(5) / 3 * (2 * np.cos(self.eta) * np.cos(self.phi) - np.sin(self.eta))
+        return jnp.sqrt(5) / 3 * (2 * jnp.cos(self.eta) * jnp.cos(self.phi) - jnp.sin(self.eta))
 
     @property
     def xi_d(self):
         """Return the down-quark-rotated charged part of the NSI factorisation."""
-        return np.sqrt(5) / 3 * (2 * np.sin(self.eta) - np.cos(self.eta) * np.cos(self.phi))
+        return jnp.sqrt(5) / 3 * (2 * jnp.sin(self.eta) - jnp.cos(self.eta) * jnp.cos(self.phi))
 
     @property
     def xi_e(self):
         """Return the electron-rotated charged part of the NSI factorisation."""
-        return np.sqrt(5) * np.cos(self.eta) * np.sin(self.phi)
+        return jnp.sqrt(5) * jnp.cos(self.eta) * jnp.sin(self.phi)
 
     def G_nucleus_coupling_matrix(self, nucleus):
         """Return the G coupling matrix."""
@@ -103,12 +101,12 @@ class GeneralNSI(Model):
 
         G_matrix = self.G_nucleus_coupling_matrix(nucleus)
 
-        cs_sm = Q_nu_N ** 2 / 4 * np.diag((1,1,1))
+        cs_sm = Q_nu_N ** 2 / 4 * jnp.diag(jnp.array([1,1,1]))
         cs_int = - Q_nu_N * G_matrix.real
-        cs_bsm = np.matmul(G_matrix, G_matrix.conjugate())
+        cs_bsm = jnp.matmul(G_matrix, G_matrix.conjugate())
 
-        return np.multiply.outer(_nuclear_prefactor(nucleus, E_R, E_nu),
-                                 (cs_sm + cs_int + cs_bsm))
+        return jnp.tensordot(_nuclear_prefactor(nucleus, E_R, E_nu),
+                                 (cs_sm + cs_int + cs_bsm), axes = ((),()))
 
 
     def electron_cross_section_flavour(self, electron, E_R, E_nu):
@@ -122,21 +120,21 @@ class GeneralNSI(Model):
         xi_p = self.xi_p
         xi_n = self.xi_n 
 
-        GL_matrix = (np.array([[1,0,0],[0,0,0],[0,0,0]])   
-                    + g_L * np.diag([1,1,1]) 
+        GL_matrix = (jnp.array([[1,0,0],[0,0,0],[0,0,0]])   
+                    + g_L * jnp.diag(jnp.array([1,1,1]))
                     + 0.5*eps_matrix*xi_e)
 
-        GR_matrix = (g_R*np.diag([1,1,1]) 
+        GR_matrix = (g_R*jnp.diag(jnp.array([1,1,1]))
                      + 0.5 * eps_matrix*xi_e)
 
         prefactor  = 2 * config.G_F ** 2 * config.m_e / np.pi
 
         Lterm_shape_enhancement = (E_R / E_nu).shape  # To get Lterm to be correct shape for sum
 
-        Lterm = np.multiply.outer(np.ones(Lterm_shape_enhancement), np.matmul(GL_matrix, GL_matrix.conjugate()))
-        Rterm = np.multiply.outer((1 - E_R/E_nu)**2, np.matmul(GR_matrix, GR_matrix.conjugate()))
-        LRterm = np.multiply.outer(((config.m_e * E_R)/(2 * E_nu**2)), (np.matmul(GL_matrix, GR_matrix.conjugate())
-                                    + np.matmul(GR_matrix, GL_matrix.conjugate())))
+        Lterm = jnp.tensordot(jnp.ones(Lterm_shape_enhancement), jnp.matmul(GL_matrix, GL_matrix.conjugate()), axes = ((),()))
+        Rterm = jnp.tensordot((1 - E_R/E_nu)**2, jnp.matmul(GR_matrix, GR_matrix.conjugate()), axes = ((),()))
+        LRterm = jnp.tensordot(((config.m_e * E_R)/(2 * E_nu**2)), (jnp.matmul(GL_matrix, GR_matrix.conjugate(), axes = ((),()))
+                                    + jnp.matmul(GR_matrix, GL_matrix.conjugate())))
 
         return prefactor * (Lterm + Rterm - LRterm)
 

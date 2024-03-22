@@ -2,6 +2,7 @@
  adiabaticity parameter also included."""
 
 import numpy as np
+import jax.numpy as jnp
 from snuddd import config
 
 N_A = 6.02214076e23  # Avogadro's constant
@@ -26,7 +27,7 @@ def log10_electron_density(x):
     fraction r / R_SUN. Expression taken from https://arxiv.org/pdf/astro-ph/0511337.pdf.
     """
 
-    return e1 - e2 * x - e3 * np.exp(-(x / e4) ** e5)
+    return e1 - e2 * x - e3 * jnp.exp(-(x / e4) ** e5)
 
 
 def log10_neutron_electron_density(x):
@@ -34,7 +35,7 @@ def log10_neutron_electron_density(x):
     fraction r / R_SUN. Expression derived from neutron density taken from https://arxiv.org/pdf/astro-ph/0511337.pdf.
     """
 
-    return (n1 - e1) - (n2 - e2) * x + e3 * np.exp(-(x / e4) ** e5)
+    return (n1 - e1) - (n2 - e2) * x + e3 * jnp.exp(-(x / e4) ** e5)
 
 
 def electron_density(x):
@@ -52,13 +53,13 @@ def neutron_electron_fraction(x):
 def electron_density_derivative_scaling(x):
     """Return scaling relationship for derivative of electron number density profile."""
 
-    return np.log(10) * (-e2 + (e3 * e5 / e4) * (x / e4) ** (e5 - 1) * np.exp(-(x / e4) ** e5))
+    return jnp.log(10) * (-e2 + (e3 * e5 / e4) * (x / e4) ** (e5 - 1) * jnp.exp(-(x / e4) ** e5))
 
 
 def neutron_electron_fraction_derivative_scaling(x):
     """Return scaling relationship for derivative of neutron/electron number density profile."""
 
-    return np.log(10) * (- (n2 - e2) - e3 * e5 / e4 * (x/e4)**(e5 - 1) * np.exp(-(x/e4)**e5))
+    return jnp.log(10) * (- (n2 - e2) - e3 * e5 / e4 * (x/e4)**(e5 - 1) * jnp.exp(-(x/e4)**e5))
 
 
 def electron_density_derivative(x):

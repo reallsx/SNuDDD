@@ -1,5 +1,6 @@
 """Useful functions for NSI work"""
 import numpy as np
+import jax.numpy as jnp
 from snuddd.models import GeneralNSI
 
 
@@ -23,12 +24,12 @@ def invert_nsi_e(eps_e, eta, phi):
 def invert_nsi_p(eps_p, eta, phi):
     """Given the full, unfactorised NSI matrix element for the proton, return the flavour-specific and
     charge independent matrix element, eps_{alpha beta}^{eta}."""
-    return eps_p / (np.sqrt(5) * np.cos(eta) * np.cos(phi))
+    return eps_p / (jnp.sqrt(5) * jnp.cos(eta) * jnp.cos(phi))
 
 
 def eps_matrix_sym(mat):
     """Return the symmetric NSI matrix given an UPPER triangular flavour matrix."""
-    return mat - np.tril(mat, -1) + np.triu(mat, 1).T
+    return mat - jnp.tril(mat, -1) + jnp.triu(mat, 1).T
 
 
 def map_eta(eta_prime, phi):
@@ -36,7 +37,7 @@ def map_eta(eta_prime, phi):
     the full 3D framework.
     """
 
-    return np.arctan((np.sin(phi) + np.cos(phi)) * np.tan(eta_prime))
+    return jnp.arctan((jnp.sin(phi) + jnp.cos(phi)) * jnp.tan(eta_prime))
 
 
 def map_eps(eps_prime, eta_prime, phi, c=True):
@@ -47,6 +48,6 @@ def map_eps(eps_prime, eta_prime, phi, c=True):
     eta = map_eta(eta_prime, phi)
 
     if c or eta_prime == 0:
-        return eps_prime * (np.cos(eta_prime) / np.cos(eta) /
-                            (np.sin(phi) + np.cos(phi)))
-    return eps_prime * np.sin(eta_prime) / np.sin(eta)
+        return eps_prime * (jnp.cos(eta_prime) / jnp.cos(eta) /
+                            (jnp.sin(phi) + jnp.cos(phi)))
+    return eps_prime * jnp.sin(eta_prime) / jnp.sin(eta)

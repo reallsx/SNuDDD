@@ -1,5 +1,6 @@
 """Creates efficiency functions for DD experiments, which can be extended to a new threshold"""
 import numpy as np
+import jax.numpy as jnp
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.optimize import root_scalar, brentq
 

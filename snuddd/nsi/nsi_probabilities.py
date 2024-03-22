@@ -1,6 +1,10 @@
 """The solar probabilities module"""
 import numpy as np
-from scipy.interpolate import interp1d
+import jax.numpy as jnp
+from snuddd.jinterp import interp1d
+# import jax.scipy.integrate.trapezoid as trapz
+from jax.scipy.integrate import trapezoid as trapz
+# from scipy.interpolate import interp1d
 from snuddd import config
 from snuddd.nsi import flux_dists, oscillation as osc
 from snuddd import models
@@ -29,7 +33,7 @@ class ProbabilityCalculator:
         prob_2nu = self.prob_ee_2nu(E_nus, nu)
 
         delta_term = 2 * self.osc_params.s13 * self.osc_params.s23 * self.osc_params.c23 * self.osc_params.s12 * self.osc_params.c12 * \
-            np.cos(self.osc_params.delta_cp) * self._cos_matter_average(E_nus, nu)
+            jnp.cos(self.osc_params.delta_cp) * self._cos_matter_average(E_nus, nu)
 
         result = self.osc_params.c13**2 * (self.osc_params.c23**2 * (1 - prob_2nu) +
                                self.osc_params.s13**2 * self.osc_params.s23**2 * (1 + prob_2nu) +
@@ -43,7 +47,7 @@ class ProbabilityCalculator:
         prob_2nu = self.prob_ee_2nu(E_nus, nu)
 
         delta_term = 2 * self.osc_params.s13 * self.osc_params.s23 * self.osc_params.c23 * self.osc_params.s12 * self.osc_params.c12 * \
-            np.cos(self.osc_params.delta_cp) * self._cos_matter_average(E_nus, nu)
+            jnp.cos(self.osc_params.delta_cp) * self._cos_matter_average(E_nus, nu)
 
         result = self.osc_params.c13**2 * (self.osc_params.s23**2 * (1 - prob_2nu) +
                                self.osc_params.s13**2 * self.osc_params.c23**2 * (1 + prob_2nu) -
@@ -64,7 +68,7 @@ class ProbabilityCalculator:
         E_nu_max (MeV)
         """
 
-        E_nus = np.geomspace(E_nu_min / 1e3, E_nu_max / 1e3, 500)  # GeV!
+        E_nus = jnp.geomspace(E_nu_min / 1e3, E_nu_max / 1e3, 500)  # GeV!
 
         interp_probabilities = {}
         for nu in config.NU_SOURCE_KEYS:
@@ -78,11 +82,11 @@ class ProbabilityCalculator:
     def _cos_matter_average(self, E_nus, nu: str):
         "Return the average of cos(2*theta_m)."
 
-        xs = np.linspace(0., 0.35, 1000)  # Solar distances to integrate over
+        xs = jnp.linspace(0., 0.35, 1000)  # Solar distances to integrate over
         integrand = osc.c12m_2(xs, E_nus, self.model, self.osc_params).T * \
             flux_dists.dist_dict[nu](xs)
-        norm = np.trapz(flux_dists.dist_dict[nu](xs), xs)  # Account for slight lack of norm
-        return np.trapz(integrand, xs) / norm
+        norm = trapz(flux_dists.dist_dict[nu](xs), xs)  # Account for slight lack of norm
+        return trapz(integrand, xs) / norm
 
 
 
@@ -98,31 +102,31 @@ class DensityMatrixCalculator(ProbabilityCalculator):
     @property
     def OMAT(self):
 
-        return np.array([[self.osc_params.c13, 0, self.osc_params.s13],
+        return jnp.array([[self.osc_params.c13, 0, self.osc_params.s13],
                          [-self.osc_params.s13 * self.osc_params.s23, self.osc_params.c23, self.osc_params.c13 * self.osc_params.s23],
                          [-self.osc_params.s13 * self.osc_params.c23, -self.osc_params.s23, self.osc_params.c13 * self.osc_params.c23]])
 
     @property
     def AMAT(self):
         OMAT = self.OMAT
-        return np.outer(OMAT[:, 1], OMAT[:, 1]) - np.outer(OMAT[:, 0], OMAT[:, 0])
+        return jnp.outer(OMAT[:, 1], OMAT[:, 1]) - jnp.outer(OMAT[:, 0], OMAT[:, 0])
 
     @property
     def BMAT(self):
         OMAT = self.OMAT
-        return np.outer(OMAT[:, 0], OMAT[:, 1]) + np.outer(OMAT[:, 1], OMAT[:, 0])
+        return jnp.outer(OMAT[:, 0], OMAT[:, 1]) + jnp.outer(OMAT[:, 1], OMAT[:, 0])
 
     @property
     def CMAT(self):
         OMAT = self.OMAT
-        return np.outer(OMAT[:, 0], OMAT[:, 1]) - np.outer(OMAT[:, 1], OMAT[:, 0])
+        return jnp.outer(OMAT[:, 0], OMAT[:, 1]) - jnp.outer(OMAT[:, 1], OMAT[:, 0])
 
     @property
     def DMAT(self):
         OMAT = self.OMAT
-        return (np.outer(OMAT[:, 0], OMAT[:, 0]) * abs(OMAT[0, 0] * OMAT[0, 0])
-                + np.outer(OMAT[:, 1], OMAT[:, 1]) * abs(OMAT[0, 1] * OMAT[0, 1])
-                + np.outer(OMAT[:, 2], OMAT[:, 2]) * abs(OMAT[0, 2] * OMAT[0, 2]))
+        return (jnp.outer(OMAT[:, 0], OMAT[:, 0]) * abs(OMAT[0, 0] * OMAT[0, 0])
+                + jnp.outer(OMAT[:, 1], OMAT[:, 1]) * abs(OMAT[0, 1] * OMAT[0, 1])
+                + jnp.outer(OMAT[:, 2], OMAT[:, 2]) * abs(OMAT[0, 2] * OMAT[0, 2]))
 
     def prob_ee_2nu(self, E_nus, cos_matter_averages):
         "Return the electron survival probability in 2 nu picture."
@@ -139,13 +143,13 @@ class DensityMatrixCalculator(ProbabilityCalculator):
         "Return Prob_int = Re(S^(2)_11 (S^(2)_21)*) as defined in arXiv:2204.03011 eq. A10"
     
         c2m = cos_matter_averages
-        return -self.osc_params.s12 * self.osc_params.c12 * c2m * np.cos(self.osc_params.delta_cp)
+        return -self.osc_params.s12 * self.osc_params.c12 * c2m * jnp.cos(self.osc_params.delta_cp)
 
     def prob_2_ext(self, cos_matter_averages):
         "Return Prob_ext = Im(S^(2)_11 (S^(2)_21)*) as defined in arXiv:2204.03011 eq. A10"
 
         c2m = cos_matter_averages
-        return self.osc_params.s12 * self.osc_params.c12 * c2m * np.sin(self.osc_params.delta_cp)
+        return self.osc_params.s12 * self.osc_params.c12 * c2m * jnp.sin(self.osc_params.delta_cp)
 
     def density(self,E_nus, nu: str):
         '''Equations A.17 from 2204.03011'''
@@ -157,9 +161,9 @@ class DensityMatrixCalculator(ProbabilityCalculator):
         DMAT_shape_enhancement = E_nus.shape  # To get Lterm to be correct shape for sum
 
 
-        return self.osc_params.c13**2 * (np.multiply.outer(self.prob_2_osc(E_nus, c2ms), self.AMAT)
-                        + np.multiply.outer(self.prob_2_int(c2ms), self.BMAT)
-                        + 1j * np.multiply.outer(self.prob_2_ext(c2ms), self.CMAT)) + np.multiply.outer(np.ones(DMAT_shape_enhancement), self.DMAT)
+        return self.osc_params.c13**2 * (jnp.tensordot(self.prob_2_osc(E_nus, c2ms), self.AMAT, axes=((), ()))
+                        + jnp.tensordot(self.prob_2_int(c2ms), self.BMAT, axes=((), ()))
+                        + 1j * jnp.tensordot(self.prob_2_ext(c2ms), self.CMAT, axes=((), ()))) + jnp.tensordot(np.ones(DMAT_shape_enhancement), self.DMAT, axes=((), ()))
 
 
     def interpolate_density_elements(self, E_nu_min=3.4640e-3, E_nu_max=1.8784e1):
@@ -181,14 +185,20 @@ class DensityMatrixCalculator(ProbabilityCalculator):
             rhomuta = rhos[:, 1, 2]
             rhotata = rhos[:, 2, 2]
 
-            expanded_rhos = (np.real(rhoee), np.imag(rhoee), 
-                            np.real(rhoemu), np.imag(rhoemu),
-                            np.real(rhoeta), np.imag(rhoeta),
-                            np.real(rhomumu), np.imag(rhomumu),
-                            np.real(rhomuta), np.imag(rhomuta),
-                            np.real(rhotata), np.imag(rhotata))
+            expanded_rhos = [jnp.real(rhoee), jnp.imag(rhoee), 
+                            jnp.real(rhoemu), jnp.imag(rhoemu),
+                            jnp.real(rhoeta), jnp.imag(rhoeta),
+                            jnp.real(rhomumu), jnp.imag(rhomumu),
+                            jnp.real(rhomuta), jnp.imag(rhomuta),
+                            jnp.real(rhotata), jnp.imag(rhotata)]
             
             interp_expanded_rhos[nu] = interp1d(E_nus, expanded_rhos)
+            # interp_expanded_rhos[nu] = jnp.vectorize(jnp.interp, signature='(n),(m)->(m)', excluded=(0, 1))
+
+            # interp_func = jnp.vectorize(jnp.interp, signature='(n),(m)->(m)', excluded=(0, 1))
+            # interp_expanded_rhos[nu] = lambda x, xp=E_nus: interp_func(x, xp, expanded_rhos)
+
+
 
         return interp_expanded_rhos
 
@@ -200,16 +210,16 @@ class DensityMatrixCalculator(ProbabilityCalculator):
         mumu_re, mumu_im, muta_re, muta_im, tata_re, tata_im= (rho_els[6], rho_els[7], rho_els[8], rho_els[9],
                                                                 rho_els[10], rho_els[11])
 
-        rho = np.array([[ee_re + 1j*ee_im, emu_re + 1j*emu_im, eta_re + 1j*eta_im],
+        rho = jnp.array([[ee_re + 1j*ee_im, emu_re + 1j*emu_im, eta_re + 1j*eta_im],
                         [emu_re-1j*emu_im, mumu_re + 1j*mumu_im, muta_re+1j*muta_im],
                         [eta_re - 1j*eta_im, muta_re - 1j*muta_im, tata_re + 1j*tata_im]])
 
-        if len(np.shape(rho)) > 2: 
+        if len(jnp.shape(rho)) > 2: 
             return rho.swapaxes(0, 2).swapaxes(1, 2)
         
     
         return rho
 
 
-sm = models.GeneralNSI(np.zeros((3, 3)), 0, 0)
+sm = models.GeneralNSI(jnp.zeros((3, 3)), 0, 0)
 interp_density_sm = DensityMatrixCalculator(sm).interpolate_density_elements()

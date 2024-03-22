@@ -1,7 +1,8 @@
 """Module to interpolate flux distributions taken from 1302.2791."""
 
 import numpy as np
-from scipy.interpolate import interp1d
+from snuddd.jinterp import interp1d
+# from scipy.interpolate import interp1d
 from snuddd import config
 
 
@@ -42,7 +43,8 @@ def interpolate_dist(nu_source):
     """Return interpolated distribution function for neutrino source."""
 
     xs_data, fs_data = read_dist_data(nu_source)
-    return interp1d(xs_data, fs_data, kind='linear', bounds_error=False, fill_value=0.)
+    # return interp1d(xs_data, fs_data, kind='linear', bounds_error=False, fill_value=0.)
+    return interp1d(xs_data, fs_data)
 
 
 def create_dist_dict() -> dict:

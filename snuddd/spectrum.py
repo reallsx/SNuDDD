@@ -5,7 +5,10 @@ from tkinter import E
 import typing
 
 import numpy as np
-from scipy.interpolate import interp1d
+import jax.numpy as jnp
+from jax.scipy.integrate import trapezoid as trapz
+
+# from scipy.interpolate import interp1d
 from snuddd import config
 from snuddd.nsi.nsi_probabilities import DensityMatrixCalculator, interp_density_sm
 
@@ -41,8 +44,8 @@ class SpectrumTrace():
             E_nus_mins = (E_nu_min < E_nu_mono)
             density_mat = self.density_calc.matrix_from_elements(density_elements(E_nu_mono))
             dsigma_mat = self.target.cross_section_flavour(E_R, E_nu_mono)
-            matrix_mult = np.matmul(density_mat, dsigma_mat)
-            v_flux = np.array([[config.nu_flux[nu]]])
+            matrix_mult = jnp.matmul(density_mat, dsigma_mat)
+            v_flux = jnp.array([[config.nu_flux[nu]]])
             integrated = v_flux * matrix_mult.trace(axis1=-2, axis2=-1)
 
             return self.target.number_targets_mass(E_R) * integrated * config.rate_conv * E_nus_mins
@@ -60,14 +63,14 @@ class SpectrumTrace():
         E_R = np.array([E_R])
         dsigma_mat = self.target.cross_section_flavour(E_R, E_nus)
         dsigma_mat = dsigma_mat.swapaxes(0,1)
-        density_mat = np.rollaxis(density_mat, 3)
-        matrix_mult = np.matmul(density_mat, dsigma_mat)
+        density_mat = jnp.rollaxis(density_mat, 3)
+        matrix_mult = jnp.matmul(density_mat, dsigma_mat)
         matrix_mult = matrix_mult.swapaxes(0,1)
 
         integrands = nu_fluxes * matrix_mult.trace(axis1=-2, axis2=-1).T
-        rates = N_targets * np.trapz(integrands, E_nus.T) * config.rate_conv
+        rates = N_targets * trapz(integrands, E_nus.T) * config.rate_conv
 
-        return np.where(rates < 0, 0, rates)
+        return jnp.where(rates < 0, 0, rates)
 
     def prepare_density(self):
         """Return dictionary of interpolated probabilities for all nu sources.

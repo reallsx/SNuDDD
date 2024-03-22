@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 import numpy as np
+import jax.numpy as jnp
 from scipy.optimize import root_scalar
 from snuddd import config
 from snuddd.nsi import solar_profiles
@@ -21,55 +22,55 @@ class OscillationParameters:
     def c12(self):
         """Cosine of theta_12 angle"""
 
-        return np.cos(self.theta_12)
+        return jnp.cos(self.theta_12)
 
     @property
     def s12(self):
         """Sine of theta_12 angle"""
 
-        return np.sin(self.theta_12)
+        return jnp.sin(self.theta_12)
 
     @property
     def c12_2(self):
         """Cosine of 2 * theta_12 angle"""
 
-        return np.cos(2 * self.theta_12)
+        return jnp.cos(2 * self.theta_12)
 
     @property
     def s12_2(self):
         """Sine of 2 * theta_12 angle"""
 
-        return np.sin(2 * self.theta_12)
+        return jnp.sin(2 * self.theta_12)
 
     @property
     def c13(self):
         """Cosine of theta_13 angle"""
 
-        return np.cos(self.theta_13)
+        return jnp.cos(self.theta_13)
     @property
     def s13(self):
         """Sine of theta_13 angle"""
 
-        return np.sin(self.theta_13)
+        return jnp.sin(self.theta_13)
 
     @property
     def c23(self):
         """Cosine of theta_23 angle"""
 
-        return np.cos(self.theta_23)
+        return jnp.cos(self.theta_23)
 
     @property
     def s23(self):
         """Sine of theta_23 angle"""
 
-        return np.sin(self.theta_23)
+        return jnp.sin(self.theta_23)
 
 
 
 def potential_cc(x):
     """Return charged-current potential (in GeV)."""
 
-    return np.sqrt(2) * config.G_F * solar_profiles.electron_density(x)
+    return jnp.sqrt(2) * config.G_F * solar_profiles.electron_density(x)
 
 
 def xi(x, nsi_model):
@@ -133,8 +134,8 @@ def p(x, E_nu, nsi_model, osc_params):
 
     s12_2 = osc_params.s12_2
 
-    return np.squeeze(s12_2 + np.multiply.outer(2 * xi(x, nsi_model) * eps_N(nsi_model, osc_params) *
-                            potential_cc(x), 1 / delta_vacuum_energy(E_nu, osc_params)))
+    return jnp.squeeze(s12_2 + jnp.tensordot(2 * xi(x, nsi_model) * eps_N(nsi_model, osc_params) *
+                            potential_cc(x), 1 / delta_vacuum_energy(E_nu, osc_params), axes = ((),())))
 
 
 def q(x, E_nu, nsi_model, osc_params):
@@ -142,8 +143,8 @@ def q(x, E_nu, nsi_model, osc_params):
 
     c12_2 = osc_params.c12_2
 
-    return np.squeeze(c12_2 + np.multiply.outer((2 * xi(x, nsi_model) * eps_D(nsi_model, osc_params) - osc_params.c13 ** 2) *
-                            potential_cc(x), 1 / delta_vacuum_energy(E_nu, osc_params)))
+    return jnp.squeeze(c12_2 + jnp.tensordot((2 * xi(x, nsi_model) * eps_D(nsi_model, osc_params) - osc_params.c13 ** 2) *
+                            potential_cc(x), 1 / delta_vacuum_energy(E_nu, osc_params), axes = ((),())))
 
 
 def delta_matter_energy(x, E_nu, nsi_model, osc_params):
@@ -151,7 +152,7 @@ def delta_matter_energy(x, E_nu, nsi_model, osc_params):
     and second mass eigenstates.
     """
 
-    return delta_vacuum_energy(E_nu, osc_params) * np.sqrt(p(x, E_nu, nsi_model, osc_params) ** 2 +
+    return delta_vacuum_energy(E_nu, osc_params) * jnp.sqrt(p(x, E_nu, nsi_model, osc_params) ** 2 +
                                                            q(x, E_nu, nsi_model, osc_params) ** 2)
 
 
@@ -160,7 +161,7 @@ def potential_cc_dot(x):
     fraction.
     """
 
-    return np.sqrt(2) * config.G_F * solar_profiles.electron_density_derivative(x)
+    return jnp.sqrt(2) * config.G_F * solar_profiles.electron_density_derivative(x)
 
 
 def xi_dot(x, nsi_model):
@@ -172,9 +173,9 @@ def xi_dot(x, nsi_model):
 def p_dot(x, E_nu, nsi_model, osc_params):
     """Return derivative of q parameter."""
 
-    return np.multiply.outer(2 * eps_N(nsi_model, osc_params) *
+    return jnp.tensordot(2 * eps_N(nsi_model, osc_params) *
                     (xi(x, nsi_model) * potential_cc_dot(x) + xi_dot(x, nsi_model) * potential_cc(x)),
-                    1 / delta_vacuum_energy(E_nu, osc_params))
+                    1 / delta_vacuum_energy(E_nu, osc_params), axes = ((),()))
 
 
 def q_dot(x, E_nu, nsi_model, osc_params):
@@ -182,9 +183,9 @@ def q_dot(x, E_nu, nsi_model, osc_params):
 
     c13 = osc_params.c13
 
-    return np.multiply.outer((2 * eps_D(nsi_model, osc_params) * (xi(x, nsi_model) * potential_cc_dot(x) +
+    return jnp.tensordot((2 * eps_D(nsi_model, osc_params) * (xi(x, nsi_model) * potential_cc_dot(x) +
                                                                     xi_dot(x, nsi_model) * potential_cc(x)) -
-                                            c13 ** 2 * potential_cc_dot(x)), 1 / delta_vacuum_energy(E_nu, osc_params))
+                                            c13 ** 2 * potential_cc_dot(x)), 1 / delta_vacuum_energy(E_nu, osc_params), axes = ((),()))
 
 
 def t12m_2(x, E_nu, nsi_model, osc_params):
@@ -196,14 +197,14 @@ def t12m_2(x, E_nu, nsi_model, osc_params):
 def s12m_2(x, E_nu, nsi_model, osc_params):
     """Return the sin of twice the mixing angle in matter."""
 
-    return p(x, E_nu, nsi_model, osc_params) / (np.sqrt(p(x, E_nu, nsi_model,
+    return p(x, E_nu, nsi_model, osc_params) / (jnp.sqrt(p(x, E_nu, nsi_model,
                                                           osc_params) ** 2 + q(x, E_nu, nsi_model, osc_params) ** 2))
 
 
 def c12m_2(x, E_nu, nsi_model, osc_params):
     """Return the cos of twice the mixing angle in matter."""
 
-    return q(x, E_nu, nsi_model, osc_params) / (np.sqrt(p(x, E_nu, nsi_model, osc_params) ** 2 + q(x, E_nu, nsi_model, osc_params) ** 2))
+    return q(x, E_nu, nsi_model, osc_params) / (jnp.sqrt(p(x, E_nu, nsi_model, osc_params) ** 2 + q(x, E_nu, nsi_model, osc_params) ** 2))
 
 
 def theta_dot(x, E_nu, nsi_model, osc_params):
@@ -226,7 +227,7 @@ def gamma(x, E_nu, nsi_model, osc_params):
 def gamma_min(E_nu, nsi_model, osc_params):
     """Return the minimum value of gamma in the solar interior"""
 
-    xs = np.linspace(0., 1., 100)
+    xs = jnp.linspace(0., 1., 100)
     gammas = gamma(xs, E_nu, nsi_model, osc_params)
     return np.min(gammas)
 

@@ -1,8 +1,10 @@
 import os
 import numpy as np
+import jax.numpy as jnp
 import pandas as pd
-from scipy.integrate import trapz
-from scipy.interpolate import interp1d
+from jax.scipy.integrate import trapezoid
+from snuddd.jinterp import interp1d
+# from scipy.interpolate import interp1d
 
 
 _ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -94,7 +96,7 @@ for key in NU_SOURCE_KEYS:
     if key in NU_SOURCE_KEYS_MONO:
         continue
     else:
-        nu_integral[key] = trapz(nu_fluxes[key], E_nus[key])
+        nu_integral[key] = trapezoid(nu_fluxes[key], E_nus[key])
 
 for key in NU_SOURCE_KEYS:
     if key in NU_SOURCE_KEYS_MONO:
@@ -105,5 +107,5 @@ for key in NU_SOURCE_KEYS:
 nu_flux_interp = {key: interp1d(E_nus[key], nu_flux[key]) for key in
                   set(NU_SOURCE_KEYS).symmetric_difference(NU_SOURCE_KEYS_MONO)}
 
-nu_flux_array = np.array(list((nu_flux.values())), dtype=object)  # np array of fluxes instead of dict
-E_nus_array = np.array(list((E_nus.values)), dtype=object)
+nu_flux_array = jnp.array(list((nu_flux.values())), dtype=object)  # np array of fluxes instead of dict
+E_nus_array = jnp.array(list((E_nus.values)), dtype=object)
