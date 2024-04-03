@@ -51,9 +51,9 @@ class SpectrumTrace():
             return self.target.number_targets_mass(E_R) * integrated * config.rate_conv * E_nus_mins
 
         nu_flux_fn = config.nu_flux_interp[nu]
-        np.putmask(E_nu_min, E_nu_min < nu_flux_fn.x.min() / 1000, nu_flux_fn.x.min() / 1000)
-        np.putmask(E_nu_min, E_nu_min > nu_flux_fn.x.max() / 1000, (1 - 1e-6) * nu_flux_fn.x.max() / 1000)
-        E_nus = np.geomspace(E_nu_min, nu_flux_fn.x.max() / 1000, 500)  # The relevant neutrino energies (in GeV)
+        np.putmask(E_nu_min, E_nu_min < nu_flux_fn.xp.min() / 1000, nu_flux_fn.xp.min() / 1000)
+        np.putmask(E_nu_min, E_nu_min > nu_flux_fn.xp.max() / 1000, (1 - 1e-6) * nu_flux_fn.xp.max() / 1000)
+        E_nus = np.geomspace(E_nu_min, nu_flux_fn.xp.max() / 1000, 500)  # The relevant neutrino energies (in GeV)
 
         nu_fluxes = nu_flux_fn(E_nus * 1000).T * 1e3  # Convert to per GeV
         density_mat = self.density_calc.matrix_from_elements(density_elements(E_nus))

@@ -107,5 +107,5 @@ for key in NU_SOURCE_KEYS:
 nu_flux_interp = {key: interp1d(E_nus[key], nu_flux[key]) for key in
                   set(NU_SOURCE_KEYS).symmetric_difference(NU_SOURCE_KEYS_MONO)}
 
-nu_flux_array = jnp.array(list((nu_flux.values())), dtype=object)  # np array of fluxes instead of dict
-E_nus_array = jnp.array(list((E_nus.values)), dtype=object)
+nu_flux_array = np.array(list((nu_flux.values())), dtype=object)  # np array of fluxes instead of dict
+E_nus_array = np.array(list((E_nus.values)), dtype=object)
