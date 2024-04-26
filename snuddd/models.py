@@ -133,8 +133,8 @@ class GeneralNSI(Model):
 
         Lterm = jnp.tensordot(jnp.ones(Lterm_shape_enhancement), jnp.matmul(GL_matrix, GL_matrix.conjugate()), axes = ((),()))
         Rterm = jnp.tensordot((1 - E_R/E_nu)**2, jnp.matmul(GR_matrix, GR_matrix.conjugate()), axes = ((),()))
-        LRterm = jnp.tensordot(((config.m_e * E_R)/(2 * E_nu**2)), (jnp.matmul(GL_matrix, GR_matrix.conjugate(), axes = ((),()))
-                                    + jnp.matmul(GR_matrix, GL_matrix.conjugate())))
+        LRterm = jnp.tensordot(((config.m_e * E_R)/(2 * E_nu**2)), (jnp.matmul(GL_matrix, GR_matrix.conjugate())
+                                    + jnp.matmul(GR_matrix, GL_matrix.conjugate())), axes = ((),()))
 
         return prefactor * (Lterm + Rterm - LRterm)
 
@@ -144,7 +144,6 @@ def _nuclear_prefactor(nucleus, E_R, E_nu):
     F_helm = nucleus.form_factor(E_R)
     return config.G_F ** 2 / np.pi * nucleus.mass * (
             1 - nucleus.mass * E_R / (2 * E_nu ** 2)) * F_helm ** 2
-
 
 
 
