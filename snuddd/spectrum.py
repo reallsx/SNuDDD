@@ -1,6 +1,5 @@
 """Provides the DD recoil differential rate spectrum."""
 from __future__ import annotations
-from tkinter import E
 
 import typing
 
