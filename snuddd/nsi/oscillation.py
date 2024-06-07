@@ -220,7 +220,7 @@ def theta_dot(x, E_nu, nsi_model, osc_params):
 def gamma(x, E_nu, nsi_model, osc_params):
     """Return the general adiabaticity parameter."""
 
-    return abs(delta_vacuum_energy(E_nu, osc_params) * (p(x, E_nu, nsi_model, osc_params) ** 2 + q(x, E_nu, nsi_model, osc_params) ** 2) ** 1.5 /
+    return jnp.abs(delta_vacuum_energy(E_nu, osc_params) * (p(x, E_nu, nsi_model, osc_params) ** 2 + q(x, E_nu, nsi_model, osc_params) ** 2) ** 1.5 /
                (p_dot(x, E_nu, nsi_model, osc_params) * q(x, E_nu, nsi_model, osc_params) - p(x, E_nu, nsi_model, osc_params) * q_dot(x, E_nu, nsi_model, osc_params)))
 
 
@@ -254,3 +254,4 @@ osc_params_best = OscillationParameters(delta_m12,
                                         theta_13,
                                         theta_23,
                                         delta_cp)
+

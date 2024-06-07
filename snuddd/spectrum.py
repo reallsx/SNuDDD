@@ -1,10 +1,8 @@
 """Provides the DD recoil differential rate spectrum."""
 from __future__ import annotations
-from tkinter import E
 
 import typing
 
-import numpy as np
 import jax.numpy as jnp
 from jax.scipy.integrate import trapezoid as trapz
 
@@ -30,13 +28,12 @@ class SpectrumTrace():
     def nu_minimum_energy(self, E_R):
         """Return neutrino minimum energy given a recoil in GeV."""
         m = self.target.mass
-        E_nu_min = 1. / 2. * (E_R + np.sqrt(E_R ** 2 + 2 * self.target.mass * E_R))
+        E_nu_min = 1. / 2. * (E_R + jnp.sqrt(E_R ** 2 + 2 * self.target.mass * E_R))
 
         return E_nu_min
     
     def _rate_nu(self, E_R, nu):
         """Return differential rate for a neutrino source. Overridden for each breakdown by subclasses."""
-
         density_elements = self.nu_density_elements[nu]
         E_nu_min = self.nu_minimum_energy(E_R)  # Minimum neutrino energy
         if nu in config.NU_SOURCE_KEYS_MONO:
@@ -51,22 +48,21 @@ class SpectrumTrace():
             return self.target.number_targets_mass(E_R) * integrated * config.rate_conv * E_nus_mins
 
         nu_flux_fn = config.nu_flux_interp[nu]
-        np.putmask(E_nu_min, E_nu_min < nu_flux_fn.xp.min() / 1000, nu_flux_fn.xp.min() / 1000)
-        np.putmask(E_nu_min, E_nu_min > nu_flux_fn.xp.max() / 1000, (1 - 1e-6) * nu_flux_fn.xp.max() / 1000)
-        E_nus = np.geomspace(E_nu_min, nu_flux_fn.xp.max() / 1000, 500)  # The relevant neutrino energies (in GeV)
+        E_nu_min = jnp.where(E_nu_min < nu_flux_fn.xp.min() / 1000, nu_flux_fn.xp.min() / 1000, E_nu_min)
+        E_nu_min = jnp.where(E_nu_min > nu_flux_fn.xp.max() / 1000, (1 - 1e-6) * nu_flux_fn.xp.max() / 1000, E_nu_min)
+        E_nus = jnp.geomspace(E_nu_min, nu_flux_fn.xp.max() / 1000, 500)  # The relevant neutrino energies (in GeV)
 
         nu_fluxes = nu_flux_fn(E_nus * 1000).T * 1e3  # Convert to per GeV
         density_mat = self.density_calc.matrix_from_elements(density_elements(E_nus))
-
+        
         N_targets = self.target.number_targets_mass(E_R)
-
-        E_R = np.array([E_R])
+        
+        E_R = jnp.array([E_R])
         dsigma_mat = self.target.cross_section_flavour(E_R, E_nus)
         dsigma_mat = dsigma_mat.swapaxes(0,1)
         density_mat = jnp.rollaxis(density_mat, 3)
         matrix_mult = jnp.matmul(density_mat, dsigma_mat)
         matrix_mult = matrix_mult.swapaxes(0,1)
-
         integrands = nu_fluxes * matrix_mult.trace(axis1=-2, axis2=-1).T
         rates = N_targets * trapz(integrands, E_nus.T) * config.rate_conv
 
@@ -97,10 +93,11 @@ class SpectrumTrace():
     def _spectrum_nu(self, E_Rs, nu):
         """Same as above but for specific source."""
         spectrum = self._rate_nu(E_Rs, nu)
-        return np.squeeze(spectrum)
+        return jnp.squeeze(spectrum)
 
     def _total_spectrum(self, spectrum, total: bool):
         """Sum of zeroth axis of spectrum."""
         if total:
             return spectrum.sum(axis=0)
         return spectrum
+
