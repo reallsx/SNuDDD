@@ -1,7 +1,6 @@
 """General nucleus and electron implementations."""
 from abc import ABC, abstractmethod
 
-import numpy as np
 import jax.numpy as jnp
 
 from snuddd import config
@@ -144,7 +143,7 @@ def helm_form_factor(q, A):
     c = 1.23 * A ** (1 / 3) - 0.6  # fm
     s = 0.9  # fm
     a = 0.52  # fm
-    R = jnp.sqrt(c ** 2 + 7 / 3 * np.pi ** 2 * a ** 2 - 5 * s ** 2)
+    R = jnp.sqrt(c ** 2 + 7 / 3 * jnp.pi ** 2 * a ** 2 - 5 * s ** 2)
 
     condlist = [q == 0., ]
     funclist = [1., lambda Q: 3 * j1(Q * R) / (Q * R) * jnp.exp(-Q ** 2 * s ** 2 / 2)]

@@ -1,5 +1,4 @@
 """The solar probabilities module"""
-import numpy as np
 import jax.numpy as jnp
 from snuddd.jinterp import interp1d
 # import jax.scipy.integrate.trapezoid as trapz
@@ -163,7 +162,7 @@ class DensityMatrixCalculator(ProbabilityCalculator):
 
         return self.osc_params.c13**2 * (jnp.tensordot(self.prob_2_osc(E_nus, c2ms), self.AMAT, axes=((), ()))
                         + jnp.tensordot(self.prob_2_int(c2ms), self.BMAT, axes=((), ()))
-                        + 1j * jnp.tensordot(self.prob_2_ext(c2ms), self.CMAT, axes=((), ()))) + jnp.tensordot(np.ones(DMAT_shape_enhancement), self.DMAT, axes=((), ()))
+                        + 1j * jnp.tensordot(self.prob_2_ext(c2ms), self.CMAT, axes=((), ()))) + jnp.tensordot(jnp.ones(DMAT_shape_enhancement), self.DMAT, axes=((), ()))
 
 
     def interpolate_density_elements(self, E_nu_min=3.4640e-3, E_nu_max=1.8784e1):
@@ -173,7 +172,7 @@ class DensityMatrixCalculator(ProbabilityCalculator):
         E_nu_max (MeV)
         """
 
-        E_nus = np.geomspace(E_nu_min / 1e3, E_nu_max / 1e3, 500)  # GeV!
+        E_nus = jnp.geomspace(E_nu_min / 1e3, E_nu_max / 1e3, 500)  # GeV!
         interp_expanded_rhos = {}
 
         for nu in config.NU_SOURCE_KEYS:
@@ -223,3 +222,4 @@ class DensityMatrixCalculator(ProbabilityCalculator):
 
 sm = models.GeneralNSI(jnp.zeros((3, 3)), 0, 0)
 interp_density_sm = DensityMatrixCalculator(sm).interpolate_density_elements()
+
