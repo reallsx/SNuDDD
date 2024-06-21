@@ -3,3 +3,4 @@ snuddd.egg-info/
 build/
 snuddd/__pycache__/
 snuddd/nsi/__pycache__/
+*.ipynb

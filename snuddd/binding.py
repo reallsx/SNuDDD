@@ -21,7 +21,9 @@ class ElectronBinder:
 
     def available_electrons(self, E_R):
         """Return step function representing effective number of electrons available for scattering."""
-        binding = jnp.tile(self.binding_energies, (len(E_R), 1))
+        self.binding_energies = np.array(self.binding_energies, dtype = float)
+        self.orbital_electrons = np.array(self.orbital_electrons, dtype = int)
+        binding = jnp.tile(jnp.array(self.binding_energies), (len(E_R), 1))
         electron_index = jnp.less(binding, jnp.array([E_R * 1e9]).T)  # Electron available if binding > E_R (E_R in GeV!)
         available_electrons = (self.orbital_electrons * electron_index).sum(axis=1)  # Sum electrons free to scatter
         return available_electrons.astype(float)  # Cast as a float instead of inheriting dtype=object
